@@ -77,17 +77,25 @@
 
 	var _async2 = _interopRequireDefault(_async);
 
-	var _app = __webpack_require__(193);
+	var _emailValidation = __webpack_require__(193);
+
+	var _emailValidation2 = _interopRequireDefault(_emailValidation);
+
+	var _nameValidation = __webpack_require__(194);
+
+	var _nameValidation2 = _interopRequireDefault(_nameValidation);
+
+	var _app = __webpack_require__(195);
 
 	var _app2 = _interopRequireDefault(_app);
 
-	var _reducers = __webpack_require__(224);
+	var _reducers = __webpack_require__(226);
 
 	var _reducers2 = _interopRequireDefault(_reducers);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var createStoreWithMiddleware = (0, _redux.applyMiddleware)(_async2.default, _namesRepeatChecker2.default, _randomize2.default)(_redux.createStore);
+	var createStoreWithMiddleware = (0, _redux.applyMiddleware)(_async2.default, _namesRepeatChecker2.default, _randomize2.default, _emailValidation2.default, _nameValidation2.default)(_redux.createStore);
 
 	_reactDom2.default.render(_react2.default.createElement(
 	  _reactRedux.Provider,
@@ -21570,9 +21578,6 @@
 
 	    var _loop = function _loop(i) {
 	      var isSenderReceiver = false;
-	      // добавить, чт предпоследнее только тогда запускается, когда
-	      // игорь нераспределенный остался !!!
-	      // запихнуть этот рандомайз в миддлвейр, остальное пустить красиво
 	      if (i === namesArr.length - 2 && !isLastPlayerReceiver) {
 	        baseForRandom = baseForRandom.filter(function (player) {
 	          if (player !== namesArr[namesArr.length - 1]) {
@@ -21580,13 +21585,13 @@
 	          };
 	        });
 	        calculateRandomizeArr[i] = {
-	          senderName: namesArr[i].nameValue,
-	          receiverName: namesArr[namesArr.length - 1].nameValue
+	          senderName: namesArr[i].value,
+	          receiverName: namesArr[namesArr.length - 1].value
 	        };
 	      } else if (i === namesArr.length - 1 && !isLastPlayerReceiver) {
 	        calculateRandomizeArr[i] = {
-	          senderName: namesArr[i].nameValue,
-	          receiverName: baseForRandom[0].nameValue
+	          senderName: namesArr[i].value,
+	          receiverName: baseForRandom[0].value
 	        };
 	      } else {
 	        var getRandomInt = function getRandomInt(min, max) {
@@ -21601,15 +21606,15 @@
 	        getRandomInt(0, baseForRandom.length - 1);
 
 	        calculateRandomizeArr[i] = {
-	          senderName: namesArr[i].nameValue,
-	          receiverName: baseForRandom[randomNumber].nameValue
+	          senderName: namesArr[i].value,
+	          receiverName: baseForRandom[randomNumber].value
 	        };
-	        if (calculateRandomizeArr[i].receiverName === namesArr[namesArr.length - 1].nameValue) {
+	        if (calculateRandomizeArr[i].receiverName === namesArr[namesArr.length - 1].value) {
 	          isLastPlayerReceiver = true;
 	        }
 	        baseForRandom.splice(randomNumber, 1);
 	        for (var j = 0; j < calculateRandomizeArr.length; j++) {
-	          if (calculateRandomizeArr[j].receiverName === namesArr[i].nameValue) {
+	          if (calculateRandomizeArr[j].receiverName === namesArr[i].value) {
 	            isSenderReceiver = true;
 	          }
 	        }
@@ -21645,34 +21650,36 @@
 
 	  return function (next) {
 	    return function (action) {
-	      if (!action.payload || !action.namesBase || action.namesBaseChecked) {
+	      if (!action.payload || !action.baseToCheck || action.baseChecked || action.isEmailForCheck || action.isNameForCheck) {
 	        return next(action);
-	      } else if (action.payload.nameValue) {
-	        namesRepeatChecker(action);
 	      }
+	      namesRepeatChecker(action);
 	    };
 	  };
 	  function namesRepeatChecker(action) {
-	    var namesBaseChecked = action.namesBase;
+	    var baseChecked = action.baseToCheck;
 	    var isSmthRepeats = 0;
-	    namesBaseChecked[action.payload.number] = action.payload;
-	    console.log(namesBaseChecked);
-	    if (action.namesBase.length > 0) {
-	      for (var i = 0; i < namesBaseChecked.length; i++) {
-	        namesBaseChecked[i].repeatsCount = 1;
+	    baseChecked[action.payload.number] = action.payload;
+	    if (action.baseToCheck.length > 0) {
+	      for (var i = 0; i < baseChecked.length; i++) {
+	        if (baseChecked[i]) {
+	          baseChecked[i].repeatsCount = 1;
+	        }
 	      }
-	      for (var j = 0; j < namesBaseChecked.length; j++) {
-	        for (var k = 0; k < namesBaseChecked.length; k++) {
+	      for (var j = 0; j < baseChecked.length; j++) {
+	        for (var k = 0; k < baseChecked.length; k++) {
 	          if (j >= k) continue;
-	          if (namesBaseChecked[j].nameValue === namesBaseChecked[k].nameValue) {
-	            namesBaseChecked[j].repeatsCount++;
-	            isSmthRepeats++;
-	            namesBaseChecked[k].repeatsCount = namesBaseChecked[j].repeatsCount;
+	          if (baseChecked[j] && baseChecked[k] && baseChecked[j].value === baseChecked[k].value) {
+	            if (baseChecked[j].value) {
+	              baseChecked[j].repeatsCount++;
+	              isSmthRepeats++;
+	              baseChecked[k].repeatsCount = baseChecked[j].repeatsCount;
+	            }
 	          }
 	        }
 	      }
 	    }
-	    var newAction = _extends({}, action, { payload: namesBaseChecked, isSmthRepeats: isSmthRepeats, namesBaseChecked: true });
+	    var newAction = _extends({}, action, { payload: baseChecked, isSmthRepeats: isSmthRepeats, baseChecked: true });
 	    dispatch(newAction);
 	  }
 	};
@@ -21692,13 +21699,13 @@
 	exports.default = function (_ref) {
 	  var dispatch = _ref.dispatch;
 
+
 	  return function (next) {
 	    return function (action) {
 	      if (!action.payload || !action.payload.then) {
 	        return next(action);
 	      }
 	      action.payload.then(function (response) {
-	        console.log(response);
 	        var newAction = _extends({}, action, { payload: response });
 	        dispatch(newAction);
 	      }).catch(function (error) {
@@ -21710,6 +21717,85 @@
 
 /***/ },
 /* 193 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	exports.default = function (_ref) {
+	  var dispatch = _ref.dispatch;
+
+	  return function (next) {
+	    return function (action) {
+	      if (!action.payload || !action.isEmailForCheck) {
+	        return next(action);
+	      }
+	      isEmailValid(action);
+	    };
+	  };
+	  function isEmailValid(action) {
+	    var pattern = /\b[a-z0-9._]+@[a-z0-9.-]+\.[a-z]{2,4}\b/i;
+	    var isValid = action.payload.value.search(pattern);
+	    var errorEmailWarning = {};
+	    if (isValid === -1) {
+	      errorEmailWarning.number = action.payload.number;
+	      errorEmailWarning.errorText = 'Введите корректный Email';
+	    } else {
+	      errorEmailWarning.number = action.payload.number;
+	      errorEmailWarning.errorText = null;
+	    }
+
+	    var newAction = _extends({}, action, { isEmailForCheck: false, errorEmailWarning: errorEmailWarning });
+	    dispatch(newAction);
+	  }
+	};
+
+/***/ },
+/* 194 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	exports.default = function (_ref) {
+	  var dispatch = _ref.dispatch;
+
+	  return function (next) {
+	    return function (action) {
+	      if (!action.payload || !action.isNameForCheck) {
+	        return next(action);
+	      }
+	      isNameValid(action);
+	    };
+	  };
+	  function isNameValid(action) {
+	    var isValid = action.payload.value.length;
+	    var errorNameWarning = {};
+	    if (isValid < 3) {
+	      errorNameWarning.number = action.payload.number;
+	      errorNameWarning.errorText = 'Имя должно содержать хотя бы 3 символа';
+	    } else {
+	      errorNameWarning.number = action.payload.number;
+	      errorNameWarning.errorText = null;
+	    }
+
+	    var newAction = _extends({}, action, { isNameForCheck: false, errorNameWarning: errorNameWarning });
+	    dispatch(newAction);
+	  }
+	};
+
+/***/ },
+/* 195 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21724,11 +21810,11 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _header = __webpack_require__(194);
+	var _header = __webpack_require__(196);
 
 	var _header2 = _interopRequireDefault(_header);
 
-	var _form = __webpack_require__(195);
+	var _form = __webpack_require__(197);
 
 	var _form2 = _interopRequireDefault(_form);
 
@@ -21754,7 +21840,7 @@
 	    value: function render() {
 	      return _react2.default.createElement(
 	        'div',
-	        null,
+	        { className: 'app_container' },
 	        _react2.default.createElement(_header2.default, null),
 	        _react2.default.createElement(_form2.default, null)
 	      );
@@ -21767,7 +21853,7 @@
 	exports.default = App;
 
 /***/ },
-/* 194 */
+/* 196 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -21833,7 +21919,7 @@
 	exports.default = Header;
 
 /***/ },
-/* 195 */
+/* 197 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21850,7 +21936,7 @@
 
 	var _reactRedux = __webpack_require__(160);
 
-	var _index = __webpack_require__(196);
+	var _index = __webpack_require__(198);
 
 	var _redux = __webpack_require__(167);
 
@@ -21875,14 +21961,20 @@
 	    _this.state = {
 	      nameValue: '',
 	      emailValue: '',
+	      emailValueRepeats: null,
 	      nameValueRepeats: null,
-	      checkedRadio: 'option2'
+	      emailValidation: [],
+	      nameValidation: [],
+	      checkedRadio: 'onScreen',
+	      isWindowScrolled: false,
+	      isSubmitPermitted: false,
+	      sendingResults: [],
+	      resultsSent: false
 	    };
 	    _this.handleNameInputChange = _this.handleNameInputChange.bind(_this);
 	    _this.handleNameInputFocus = _this.handleNameInputFocus.bind(_this);
 	    _this.handleEmailInputChange = _this.handleEmailInputChange.bind(_this);
 	    _this.handleFormSubmit = _this.handleFormSubmit.bind(_this);
-	    _this.sendResultEmails = _this.sendResultEmails.bind(_this);
 	    _this.handleRadioChange = _this.handleRadioChange.bind(_this);
 	    return _this;
 	  }
@@ -21890,20 +21982,81 @@
 	  _createClass(Form, [{
 	    key: 'componentWillReceiveProps',
 	    value: function componentWillReceiveProps(nextProps) {
-	      if (nextProps.isSmthRepeats) {
-	        var tempArr = nextProps.namesBase.filter(function (name) {
-	          if (name.repeatsCount > 1) {
-	            return name;
-	          }
-	        });
+	      if (nextProps.randomizedArr && this.state.checkedRadio === 'sendByEmail' && !this.state.resultsSent) {
 	        this.setState({
-	          nameValueRepeats: tempArr
+	          resultsSent: true
 	        });
-	      } else {
+	        for (var i = 0; i < nextProps.randomizedArr.length; i++) {
+	          this.props.postResultsOnEmails(nextProps.randomizedArr[i].senderName, this.props.emailsBase[i].value, nextProps.randomizedArr[i].receiverName);
+	        }
+	      }
+	      if (nextProps.responseArr.length > 0) {
 	        this.setState({
-	          nameValue: null
+	          sendingResults: nextProps.responseArr
 	        });
-	      };
+	        console.log(this.state.sendingResults);
+	      }
+	      if (nextProps.errorEmailWarning) {
+	        var tempEmailArr = this.state.emailValidation;
+	        tempEmailArr[nextProps.errorEmailWarning.number] = nextProps.errorEmailWarning.errorText;
+	        this.setState({
+	          emailValidation: tempEmailArr
+	        });
+	      }
+	      if (nextProps.errorNameWarning) {
+	        var tempNameArr = this.state.nameValidation;
+	        tempNameArr[nextProps.errorNameWarning.number] = nextProps.errorNameWarning.errorText;
+	        this.setState({
+	          nameValidation: tempNameArr
+	        });
+	      }
+	      if (nextProps.isSmthRepeats || this.state.nameValueRepeats || this.state.emailValueRepeats) {
+	        console.log(nextProps.isSmthRepeats);
+	        if (nextProps.namesBase.length > 0) {
+	          var _tempNameArr = [];
+	          _tempNameArr = nextProps.namesBase.filter(function (value) {
+	            if (value.repeatsCount > 1) {
+	              return value;
+	            }
+	          });
+	          if (_tempNameArr.length > 0) {
+	            this.setState({
+	              nameValueRepeats: _tempNameArr
+	            });
+	          } else {
+	            this.setState({
+	              nameValueRepeats: null
+	            });
+	          };
+	        }
+	        if (nextProps.emailsBase.length > 0) {
+	          var _tempEmailArr = [];
+	          _tempEmailArr = nextProps.emailsBase.filter(function (value) {
+	            if (value.repeatsCount > 1) {
+	              return value;
+	            }
+	          });
+	          if (_tempEmailArr.length > 0) {
+	            this.setState({
+	              emailValueRepeats: _tempEmailArr
+	            });
+	          } else {
+	            this.setState({
+	              emailValueRepeats: null
+	            });
+	          };
+	        };
+	      }
+	    }
+	  }, {
+	    key: 'componentDidUpdate',
+	    value: function componentDidUpdate() {
+	      if (this.props.randomizedArr && this.state.checkedRadio === 'onScreen' && !this.state.isWindowScrolled) {
+	        window.scrollTo(0, 1500);
+	        this.setState({
+	          isWindowScrolled: true
+	        });
+	      }
 	    }
 	  }, {
 	    key: 'handleNameInputChange',
@@ -21915,10 +22068,14 @@
 	  }, {
 	    key: 'handleNameInputFocus',
 	    value: function handleNameInputFocus(number) {
-	      if (this.props.namesBase.length > number) {
-	        var newNameValue = this.props.namesBase[number].nameValue;
+	      if (this.props.namesBase[number]) {
+	        var newNameValue = this.props.namesBase[number].value;
 	        this.setState({
 	          nameValue: newNameValue
+	        });
+	      } else {
+	        this.setState({
+	          nameValue: ''
 	        });
 	      }
 	    }
@@ -21941,73 +22098,88 @@
 	    value: function handleFormSubmit(event) {
 	      event.preventDefault();
 	      this.props.calculateRandomize(this.props.namesBase);
-	      this.sendResultEmails();
 	    }
-	  }, {
-	    key: 'sendResultEmails',
-	    value: function sendResultEmails() {}
 	  }, {
 	    key: 'renderNameInputTip',
 	    value: function renderNameInputTip(number) {
-	      var repeatValue = false;
-	      if (this.state.nameValueRepeats) {
-	        for (var i = 0; i < this.state.nameValueRepeats.length; i++) {
-	          if (this.state.nameValueRepeats[i].number === number) {
-	            repeatValue = this.state.nameValueRepeats[i];
+	      var repeatNameValue = null;
+	      var repeatEmailValue = null;
+	      if (this.state.nameValueRepeats || this.state.emailValueRepeats) {
+	        if (this.state.nameValueRepeats) {
+	          for (var i = 0; i < this.state.nameValueRepeats.length; i++) {
+	            if (this.state.nameValueRepeats[i].number === number) {
+	              repeatNameValue = this.state.nameValueRepeats[i];
+	            }
 	          }
 	        }
-	        if (repeatValue) {
+	        if (this.state.emailValueRepeats) {
+	          for (var j = 0; j < this.state.emailValueRepeats.length; j++) {
+	            if (this.state.emailValueRepeats[j].number === number) {
+	              repeatEmailValue = this.state.emailValueRepeats[j];
+	            }
+	          }
+	        }
+
+	        if (repeatNameValue || repeatEmailValue) {
+	          var maxRepeatsCount = repeatNameValue ? repeatNameValue.repeatsCount : 1;
+	          if (repeatEmailValue && repeatEmailValue.repeatsCount > maxRepeatsCount) {
+	            maxRepeatsCount = repeatEmailValue.repeatsCount;
+	          }
 	          return _react2.default.createElement(
 	            'div',
-	            null,
+	            { className: 'tip__wrapper' },
 	            _react2.default.createElement(
 	              'p',
 	              null,
 	              '\u0422\u043E\u0442 \u0435\u0449\u0435 \u043A\u043E\u043D\u0444\u0443\u0437 \u0432\u044B\u0439\u0434\u0435\u0442, \u0435\u0441\u043B\u0438 ',
-	              repeatValue.nameValue,
+	              repeatNameValue ? repeatNameValue.value : "кто-нибудь",
 	              ' \u043F\u043E\u043B\u0443\u0447\u0438\u0442 ',
-	              repeatValue.repeatsCount,
-	              ' \u043F\u043E\u0434\u0430\u0440\u043A\u0430!'
+	              maxRepeatsCount,
+	              ' \u043F\u043E\u0434\u0430\u0440\u043A\u0430, \u0430 \u043A\u0442\u043E-\u043D\u0438\u0431\u0443\u0434\u044C - \u043D\u0438 \u043E\u0434\u043D\u043E\u0433\u043E!'
 	            ),
 	            _react2.default.createElement(
 	              'p',
 	              null,
-	              '\u0418\u043C\u044F \u0434\u043E\u043B\u0436\u043D\u043E \u0431\u044B\u0442\u044C \u0443\u043D\u0438\u043A\u0430\u043B\u044C\u043D\u044B\u043C.'
+	              repeatNameValue && repeatEmailValue ? "Имя и Email должны быть уникальными." : repeatNameValue ? "Имя должно быть уникальным." : "Email должен быть уникальным."
 	            )
 	          );
 	        }
 	      }
 	    }
 	  }, {
-	    key: 'renderEmailInput',
-	    value: function renderEmailInput(number) {
-	      var _this2 = this;
-
-	      if (this.state.checkedRadio === 'option1') {
+	    key: 'renderEmailValidationTip',
+	    value: function renderEmailValidationTip(number) {
+	      if (this.state.emailValidation[number]) {
 	        return _react2.default.createElement(
 	          'div',
-	          { className: 'form-group form__input-wrapper' },
+	          { className: 'tip__wrapper' },
 	          _react2.default.createElement(
-	            'label',
-	            { className: 'input__label', htmlFor: 'inputEmail' + number },
-	            'Email'
-	          ),
-	          _react2.default.createElement('input', { type: 'text',
-	            required: 'required',
-	            onChange: this.handleEmailInputChange,
-	            onBlur: function onBlur() {
-	              return _this2.props.saveEmailInput(number, _this2.state.emailValue);
-	            },
-	            className: 'form-control',
-	            id: 'inputEmail' + number,
-	            placeholder: 'Email \u0430\u0434\u0440\u0435\u0441' })
+	            'p',
+	            null,
+	            this.state.emailValidation[number]
+	          )
+	        );
+	      }
+	    }
+	  }, {
+	    key: 'renderNameValidationTip',
+	    value: function renderNameValidationTip(number) {
+	      if (this.state.nameValidation[number]) {
+	        return _react2.default.createElement(
+	          'div',
+	          { className: 'tip__wrapper' },
+	          _react2.default.createElement(
+	            'p',
+	            null,
+	            this.state.nameValidation[number]
+	          )
 	        );
 	      }
 	    }
 	  }, {
 	    key: 'renderInputGroup',
 	    value: function renderInputGroup() {
-	      var _this3 = this;
+	      var _this2 = this;
 
 	      for (var i = 0; i < this.props.playersCount; i++) {
 	        playersArr[i] = i;
@@ -22024,6 +22196,12 @@
 	          ),
 	          _react2.default.createElement(
 	            'div',
+	            { className: 'validation-tips__wrapper' },
+	            _this2.renderNameValidationTip(number),
+	            _this2.renderEmailValidationTip(number)
+	          ),
+	          _react2.default.createElement(
+	            'div',
 	            { className: 'form__input-group' },
 	            _react2.default.createElement(
 	              'div',
@@ -22034,29 +22212,156 @@
 	                '\u0418\u043C\u044F'
 	              ),
 	              _react2.default.createElement('input', { type: 'text',
+	                onChange: _this2.handleNameInputChange,
 	                required: 'required',
-	                onChange: _this3.handleNameInputChange,
 	                onFocus: function onFocus() {
-	                  return _this3.handleNameInputFocus(number);
+	                  return _this2.handleNameInputFocus(number);
 	                },
 	                onBlur: function onBlur() {
-	                  return _this3.props.saveNameInput(number, _this3.state.nameValue, _this3.props.namesBase);
+	                  return _this2.props.saveNameInput(number, _this2.state.nameValue, _this2.props.namesBase);
 	                },
-	                className: 'form-control',
+	                className: _this2.state.nameValidation[number] ? "form-control input--warning form__input" : "form-control form__input",
 	                id: 'inputName' + number,
 	                placeholder: '\u0418\u043C\u044F \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430' })
 	            ),
-	            _this3.renderEmailInput(number)
+	            _this2.renderEmailInput(number)
 	          ),
-	          _this3.renderNameInputTip(number),
+	          _this2.renderNameInputTip(number),
 	          _react2.default.createElement('hr', null)
+	        );
+	      });
+	    }
+	  }, {
+	    key: 'renderEmailInput',
+	    value: function renderEmailInput(number) {
+	      var _this3 = this;
+
+	      if (this.state.checkedRadio === 'sendByEmail') {
+	        return _react2.default.createElement(
+	          'div',
+	          { className: "form-group form__input-wrapper" },
+	          _react2.default.createElement(
+	            'label',
+	            { className: 'input__label', htmlFor: 'inputEmail' + number },
+	            'Email'
+	          ),
+	          _react2.default.createElement('input', { type: 'text',
+	            onChange: this.handleEmailInputChange,
+	            required: 'required',
+	            onBlur: function onBlur() {
+	              return _this3.props.saveEmailInput(number, _this3.state.emailValue, _this3.props.emailsBase);
+	            },
+	            className: this.state.emailValidation[number] ? "form-control input--warning form__input" : "form-control form__input",
+	            id: 'inputEmail' + number,
+	            placeholder: 'Email \u0430\u0434\u0440\u0435\u0441' })
+	        );
+	      }
+	    }
+	  }, {
+	    key: 'renderSendingResults',
+	    value: function renderSendingResults() {
+	      if (this.state.sendingResults.length > 0 && this.state.checkedRadio === 'sendByEmail') {
+	        return _react2.default.createElement(
+	          'div',
+	          null,
+	          _react2.default.createElement(
+	            'h2',
+	            null,
+	            '\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B:'
+	          ),
+	          _react2.default.createElement(
+	            'h4',
+	            null,
+	            '\u041A\u0430\u0436\u0434\u043E\u043C\u0443 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0443 \u043C\u044B \u0432\u044B\u0441\u043B\u0430\u043B\u0438 ',
+	            _react2.default.createElement(
+	              'strong',
+	              null,
+	              '\u0438\u043C\u044F'
+	            ),
+	            '. \u0427\u0435\u043B\u043E\u0432\u0435\u043A\u0443 \u0441 \u044D\u0442\u0438\u043C ',
+	            _react2.default.createElement(
+	              'strong',
+	              null,
+	              '\u0438\u043C\u0435\u043D\u0435\u043C'
+	            ),
+	            ' \u043D\u0443\u0436\u043D\u043E \u043D\u0430\u0439\u0442\u0438 \u043F\u043E\u0434\u0430\u0440\u043E\u043A:'
+	          ),
+	          _react2.default.createElement(
+	            'table',
+	            { className: 'table table-hover' },
+	            _react2.default.createElement(
+	              'thead',
+	              null,
+	              _react2.default.createElement(
+	                'tr',
+	                { className: 'active' },
+	                _react2.default.createElement(
+	                  'th',
+	                  null,
+	                  '\u2116'
+	                ),
+	                _react2.default.createElement(
+	                  'th',
+	                  null,
+	                  '\u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u0435\u043B\u044C'
+	                ),
+	                _react2.default.createElement(
+	                  'th',
+	                  null,
+	                  'Email'
+	                ),
+	                _react2.default.createElement(
+	                  'th',
+	                  null,
+	                  '\u041F\u0438\u0441\u044C\u043C\u043E'
+	                )
+	              )
+	            ),
+	            _react2.default.createElement(
+	              'tbody',
+	              null,
+	              this.renderSendingResultsTableRows()
+	            )
+	          )
+	        );
+	      }
+	    }
+	  }, {
+	    key: 'renderSendingResultsTableRows',
+	    value: function renderSendingResultsTableRows() {
+	      var orderNumber = 0;
+	      return this.state.sendingResults.map(function (name) {
+	        orderNumber++;
+	        return _react2.default.createElement(
+	          'tr',
+	          { key: name.sender.senderEmail },
+	          _react2.default.createElement(
+	            'td',
+	            { className: 'active' },
+	            orderNumber
+	          ),
+	          _react2.default.createElement(
+	            'td',
+	            { className: '' },
+	            name.sender.senderName
+	          ),
+	          _react2.default.createElement(
+	            'td',
+	            { className: '' },
+	            name.sender.senderEmail
+	          ),
+	          _react2.default.createElement(
+	            'td',
+	            { className: 'active' },
+	            name.response.data[0].status === 'sent' ? 'Выслано Имя' : 'Ошибка'
+	          )
 	        );
 	      });
 	    }
 	  }, {
 	    key: 'renderResultTable',
 	    value: function renderResultTable() {
-	      if (this.props.randomizedArr && this.state.checkedRadio === 'option2') {
+	      if (this.props.randomizedArr && this.state.checkedRadio === 'onScreen') {
 	        return _react2.default.createElement(
 	          'div',
 	          null,
@@ -22165,7 +22470,7 @@
 	                onChange: this.handleRadioChange,
 	                name: 'optionsRadios',
 	                id: 'optionsRadios2',
-	                value: 'option2',
+	                value: 'onScreen',
 	                defaultChecked: true }),
 	              _react2.default.createElement(
 	                'strong',
@@ -22184,7 +22489,7 @@
 	                onChange: this.handleRadioChange,
 	                name: 'optionsRadios',
 	                id: 'optionsRadios1',
-	                value: 'option1' }),
+	                value: 'sendByEmail' }),
 	              _react2.default.createElement(
 	                'strong',
 	                null,
@@ -22195,10 +22500,10 @@
 	        ),
 	        _react2.default.createElement('hr', null),
 	        _react2.default.createElement(
-	          'h3',
+	          'h4',
 	          null,
 	          '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0418\u043C\u044F ',
-	          this.state.checkedRadio === 'option1' ? "и Email " : "",
+	          this.state.checkedRadio === 'sendByEmail' ? "и Email " : "",
 	          '\u043A\u0430\u0436\u0434\u043E\u0433\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430'
 	        ),
 	        _react2.default.createElement(
@@ -22231,40 +22536,26 @@
 	              _react2.default.createElement(
 	                'button',
 	                { type: 'submit',
+	                  disabled: this.state.emailValueRepeats || this.state.nameValueRepeats ? 'disabled' : '',
 	                  className: 'btn btn-warning' },
 	                '\u0420\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u0442\u044C',
-	                this.state.checkedRadio === 'option1' ? " и отправить " : "",
+	                this.state.checkedRadio === 'sendByEmail' ? " и отправить " : "",
 	                ' ',
 	                _react2.default.createElement(
 	                  'span',
 	                  { className: 'badge' },
 	                  _react2.default.createElement(
 	                    'abbr',
-	                    { title: '\u041C\u044B \u0441\u043B\u0443\u0447\u0430\u0439\u043D\u044B\u043C \u043E\u0431\u0440\u0430\u0437\u043E\u043C \u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0438\u043C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u043D\u0430 \u0414\u0430\u0440\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u041F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u0435\u0439, \u0430 \u0437\u0430\u0442\u0435\u043C \u043A\u0430\u0436\u0434\u043E\u043C\u0443 \u0432\u044B\u0448\u043B\u0435\u043C \u043D\u0430 \u043F\u043E\u0447\u0442\u0443 \u0438\u043C\u044F \u0435\u0433\u043E \u041F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F', className: 'text-success initialism' },
+	                    { title: this.state.checkedRadio === 'sendByEmail' ? "Мы случайным образом распределим участников на Дарителей и Получателей, а затем каждому вышлем на почту имя его Получателя" : "Мы случайным образом распределим участников на Дарителей и Получателей", className: 'text-success initialism' },
 	                    '__?__'
 	                  )
 	                )
 	              )
-	            ),
-	            _react2.default.createElement(
-	              'div',
-	              null,
-	              _react2.default.createElement(
-	                'button',
-	                { type: 'button',
-	                  onClick: this.props.postResultsOnEmails,
-	                  className: 'btn btn-info' },
-	                _react2.default.createElement(
-	                  'span',
-	                  { className: 'badge' },
-	                  '+'
-	                ),
-	                ' \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0430\u0434\u0440\u0435\u0441 \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0438'
-	              )
 	            )
 	          )
 	        ),
-	        this.renderResultTable()
+	        this.renderResultTable(),
+	        this.renderSendingResults()
 	      );
 	    }
 	  }]);
@@ -22277,8 +22568,11 @@
 	    playersCount: state.reducers.playersCount,
 	    namesBase: state.reducers.namesBase,
 	    isSmthRepeats: state.reducers.isSmthRepeats,
+	    errorEmailWarning: state.reducers.errorEmailWarning,
+	    errorNameWarning: state.reducers.errorNameWarning,
 	    emailsBase: state.reducers.emailsBase,
-	    randomizedArr: state.reducers.randomizedArr
+	    randomizedArr: state.reducers.randomizedArr,
+	    responseArr: state.reducers.responseArr
 	  };
 	}
 
@@ -22289,7 +22583,7 @@
 	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(Form);
 
 /***/ },
-/* 196 */
+/* 198 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22303,15 +22597,15 @@
 	exports.calculateRandomize = calculateRandomize;
 	exports.postResultsOnEmails = postResultsOnEmails;
 
-	var _actionTypes = __webpack_require__(197);
+	var _actionTypes = __webpack_require__(199);
 
 	var types = _interopRequireWildcard(_actionTypes);
 
-	var _config = __webpack_require__(198);
+	var _config = __webpack_require__(200);
 
 	var config = _interopRequireWildcard(_config);
 
-	var _axios = __webpack_require__(199);
+	var _axios = __webpack_require__(201);
 
 	var _axios2 = _interopRequireDefault(_axios);
 
@@ -22319,7 +22613,7 @@
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-	_axios2.default.defaults.headers.common['PddToken'] = config.AUTH_TOKEN;
+	_axios2.default.defaults.headers.common['Content-Type'] = 'application/json;charset=UTF-8';
 
 	function addPlayer() {
 	  return {
@@ -22332,19 +22626,22 @@
 	    type: types.SAVE_NAME_INPUT,
 	    payload: {
 	      number: number,
-	      nameValue: nameValue
+	      value: nameValue
 	    },
-	    namesBase: namesBase
+	    isNameForCheck: true,
+	    baseToCheck: namesBase
 	  };
 	}
 
-	function saveEmailInput(number, emailValue) {
+	function saveEmailInput(number, emailValue, emailsBase) {
 	  return {
 	    type: types.SAVE_EMAIL_INPUT,
 	    payload: {
 	      number: number,
-	      emailValue: emailValue
-	    }
+	      value: emailValue
+	    },
+	    isEmailForCheck: true,
+	    baseToCheck: emailsBase
 	  };
 	}
 
@@ -22356,23 +22653,31 @@
 	  };
 	}
 
-	function postResultsOnEmails() {
-	  var url = config.ROOT_URL + '/api2/admin/email/ml/add';
-	  var request = fetch(url, {
-	    method: 'POST',
-	    headers: {
-	      'PddToken': config.AUTH_TOKEN
-	    },
-	    body: 'domain=' + config.DOMAIN + '&maillist=' + config.MAILLIST
+	function postResultsOnEmails(senderName, senderEmail, receiverName) {
+	  var namesAndEmailsComposed = [];
+	  console.log(senderName, senderEmail, receiverName);
+	  var request = _axios2.default.post(config.SEND_EMAIL_URL, {
+	    key: config.AUTH_TOKEN,
+	    message: {
+	      'from_email': config.FROM_EMAIL,
+	      'to': [{ 'email': senderEmail, 'type': 'to' }],
+	      'auto_text': 'true',
+	      'subject': 'Результаты распределения участников для Секретного Санты',
+	      'html': '<p>\u0421\u043F\u0430\u0441\u0438\u0431\u043E \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u0438\u0435, <strong>' + senderName + '</strong>! \u0418\u043C\u0435\u0435\u043C \u0441\u043E\u043E\u0431\u0449\u0438\u0442\u044C, \u0447\u0442\u043E \u0447\u0435\u043B\u043E\u0432\u0435\u043A, \u043A\u043E\u0442\u043E\u0440\u043E\u043C\u0443 \u0432\u0430\u043C \u0432\u044B\u043F\u0430\u043B\u0430 \u0447\u0435\u0441\u0442\u044C \u0434\u0430\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u0430\u0440\u043E\u043A \u043D\u0430 \u044D\u0442\u043E\u0442 \u043D\u043E\u0432\u044B\u0439 \u0433\u043E\u0434, \u044D\u0442\u043E ... <strong>' + receiverName + '</strong>!</p>'
+	    }
 	  });
 	  return {
 	    type: types.POST_RESULTS_ON_EMAILS,
-	    payload: request
+	    payload: request,
+	    sender: {
+	      senderName: senderName,
+	      senderEmail: senderEmail
+	    }
 	  };
 	}
 
 /***/ },
-/* 197 */
+/* 199 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22387,7 +22692,7 @@
 	var POST_RESULTS_ON_EMAILS = exports.POST_RESULTS_ON_EMAILS = 'POST_RESULTS_ON_EMAILS';
 
 /***/ },
-/* 198 */
+/* 200 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22395,27 +22700,27 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var ROOT_URL = exports.ROOT_URL = 'https://pddimp.yandex.ru';
-	var AUTH_TOKEN = exports.AUTH_TOKEN = 'WWCB6COYY2TW4AIFTTUNMDNVWEVB3XKHUU6WPGP74RGFK64PMIMQ';
+	var SEND_EMAIL_URL = exports.SEND_EMAIL_URL = 'https://mandrillapp.com/api/1.0/messages/send.json';
+	var AUTH_TOKEN = exports.AUTH_TOKEN = 'c0AHgRIhNGfK5OPRRPJSIg';
 	var DOMAIN = exports.DOMAIN = 'vmtn.ru';
-	var MAILLIST = exports.MAILLIST = 'secret_santa';
+	var FROM_EMAIL = exports.FROM_EMAIL = 'secret_santa@vmtn.ru';
 
 /***/ },
-/* 199 */
+/* 201 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(200);
+	module.exports = __webpack_require__(202);
 
 /***/ },
-/* 200 */
+/* 202 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
-	var bind = __webpack_require__(202);
-	var Axios = __webpack_require__(203);
-	var defaults = __webpack_require__(204);
+	var utils = __webpack_require__(203);
+	var bind = __webpack_require__(204);
+	var Axios = __webpack_require__(205);
+	var defaults = __webpack_require__(206);
 
 	/**
 	 * Create an instance of Axios
@@ -22448,15 +22753,15 @@
 	};
 
 	// Expose Cancel & CancelToken
-	axios.Cancel = __webpack_require__(221);
-	axios.CancelToken = __webpack_require__(222);
-	axios.isCancel = __webpack_require__(218);
+	axios.Cancel = __webpack_require__(223);
+	axios.CancelToken = __webpack_require__(224);
+	axios.isCancel = __webpack_require__(220);
 
 	// Expose all/spread
 	axios.all = function all(promises) {
 	  return Promise.all(promises);
 	};
-	axios.spread = __webpack_require__(223);
+	axios.spread = __webpack_require__(225);
 
 	module.exports = axios;
 
@@ -22465,12 +22770,12 @@
 
 
 /***/ },
-/* 201 */
+/* 203 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var bind = __webpack_require__(202);
+	var bind = __webpack_require__(204);
 
 	/*global toString:true*/
 
@@ -22770,7 +23075,7 @@
 
 
 /***/ },
-/* 202 */
+/* 204 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22787,17 +23092,17 @@
 
 
 /***/ },
-/* 203 */
+/* 205 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var defaults = __webpack_require__(204);
-	var utils = __webpack_require__(201);
-	var InterceptorManager = __webpack_require__(215);
-	var dispatchRequest = __webpack_require__(216);
-	var isAbsoluteURL = __webpack_require__(219);
-	var combineURLs = __webpack_require__(220);
+	var defaults = __webpack_require__(206);
+	var utils = __webpack_require__(203);
+	var InterceptorManager = __webpack_require__(217);
+	var dispatchRequest = __webpack_require__(218);
+	var isAbsoluteURL = __webpack_require__(221);
+	var combineURLs = __webpack_require__(222);
 
 	/**
 	 * Create a new instance of Axios
@@ -22878,13 +23183,13 @@
 
 
 /***/ },
-/* 204 */
+/* 206 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 
-	var utils = __webpack_require__(201);
-	var normalizeHeaderName = __webpack_require__(205);
+	var utils = __webpack_require__(203);
+	var normalizeHeaderName = __webpack_require__(207);
 
 	var PROTECTION_PREFIX = /^\)\]\}',?\n/;
 	var DEFAULT_CONTENT_TYPE = {
@@ -22901,10 +23206,10 @@
 	  var adapter;
 	  if (typeof XMLHttpRequest !== 'undefined') {
 	    // For browsers use XHR adapter
-	    adapter = __webpack_require__(206);
+	    adapter = __webpack_require__(208);
 	  } else if (typeof process !== 'undefined') {
 	    // For node use HTTP adapter
-	    adapter = __webpack_require__(206);
+	    adapter = __webpack_require__(208);
 	  }
 	  return adapter;
 	}
@@ -22978,12 +23283,12 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 205 */
+/* 207 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
+	var utils = __webpack_require__(203);
 
 	module.exports = function normalizeHeaderName(headers, normalizedName) {
 	  utils.forEach(headers, function processHeader(value, name) {
@@ -22996,18 +23301,18 @@
 
 
 /***/ },
-/* 206 */
+/* 208 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 
-	var utils = __webpack_require__(201);
-	var settle = __webpack_require__(207);
-	var buildURL = __webpack_require__(210);
-	var parseHeaders = __webpack_require__(211);
-	var isURLSameOrigin = __webpack_require__(212);
-	var createError = __webpack_require__(208);
-	var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(213);
+	var utils = __webpack_require__(203);
+	var settle = __webpack_require__(209);
+	var buildURL = __webpack_require__(212);
+	var parseHeaders = __webpack_require__(213);
+	var isURLSameOrigin = __webpack_require__(214);
+	var createError = __webpack_require__(210);
+	var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(215);
 
 	module.exports = function xhrAdapter(config) {
 	  return new Promise(function dispatchXhrRequest(resolve, reject) {
@@ -23103,7 +23408,7 @@
 	    // This is only done if running in a standard browser environment.
 	    // Specifically not if we're in a web worker, or react-native.
 	    if (utils.isStandardBrowserEnv()) {
-	      var cookies = __webpack_require__(214);
+	      var cookies = __webpack_require__(216);
 
 	      // Add xsrf header
 	      var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
@@ -23180,12 +23485,12 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 207 */
+/* 209 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var createError = __webpack_require__(208);
+	var createError = __webpack_require__(210);
 
 	/**
 	 * Resolve or reject a Promise based on response status.
@@ -23211,12 +23516,12 @@
 
 
 /***/ },
-/* 208 */
+/* 210 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var enhanceError = __webpack_require__(209);
+	var enhanceError = __webpack_require__(211);
 
 	/**
 	 * Create an Error with the specified message, config, error code, and response.
@@ -23234,7 +23539,7 @@
 
 
 /***/ },
-/* 209 */
+/* 211 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23259,12 +23564,12 @@
 
 
 /***/ },
-/* 210 */
+/* 212 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
+	var utils = __webpack_require__(203);
 
 	function encode(val) {
 	  return encodeURIComponent(val).
@@ -23333,12 +23638,12 @@
 
 
 /***/ },
-/* 211 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
+	var utils = __webpack_require__(203);
 
 	/**
 	 * Parse headers into an object
@@ -23376,12 +23681,12 @@
 
 
 /***/ },
-/* 212 */
+/* 214 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
+	var utils = __webpack_require__(203);
 
 	module.exports = (
 	  utils.isStandardBrowserEnv() ?
@@ -23450,7 +23755,7 @@
 
 
 /***/ },
-/* 213 */
+/* 215 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23492,12 +23797,12 @@
 
 
 /***/ },
-/* 214 */
+/* 216 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
+	var utils = __webpack_require__(203);
 
 	module.exports = (
 	  utils.isStandardBrowserEnv() ?
@@ -23551,12 +23856,12 @@
 
 
 /***/ },
-/* 215 */
+/* 217 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
+	var utils = __webpack_require__(203);
 
 	function InterceptorManager() {
 	  this.handlers = [];
@@ -23609,15 +23914,15 @@
 
 
 /***/ },
-/* 216 */
+/* 218 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
-	var transformData = __webpack_require__(217);
-	var isCancel = __webpack_require__(218);
-	var defaults = __webpack_require__(204);
+	var utils = __webpack_require__(203);
+	var transformData = __webpack_require__(219);
+	var isCancel = __webpack_require__(220);
+	var defaults = __webpack_require__(206);
 
 	/**
 	 * Throws a `Cancel` if cancellation has been requested.
@@ -23694,12 +23999,12 @@
 
 
 /***/ },
-/* 217 */
+/* 219 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(201);
+	var utils = __webpack_require__(203);
 
 	/**
 	 * Transform the data for a request or a response
@@ -23720,7 +24025,7 @@
 
 
 /***/ },
-/* 218 */
+/* 220 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23731,7 +24036,7 @@
 
 
 /***/ },
-/* 219 */
+/* 221 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23751,7 +24056,7 @@
 
 
 /***/ },
-/* 220 */
+/* 222 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23769,7 +24074,7 @@
 
 
 /***/ },
-/* 221 */
+/* 223 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23794,12 +24099,12 @@
 
 
 /***/ },
-/* 222 */
+/* 224 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var Cancel = __webpack_require__(221);
+	var Cancel = __webpack_require__(223);
 
 	/**
 	 * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -23857,7 +24162,7 @@
 
 
 /***/ },
-/* 223 */
+/* 225 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23890,7 +24195,7 @@
 
 
 /***/ },
-/* 224 */
+/* 226 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -23901,7 +24206,7 @@
 
 	var _redux = __webpack_require__(167);
 
-	var _allReducers = __webpack_require__(225);
+	var _allReducers = __webpack_require__(227);
 
 	var _allReducers2 = _interopRequireDefault(_allReducers);
 
@@ -23914,7 +24219,7 @@
 	exports.default = rootReducer;
 
 /***/ },
-/* 225 */
+/* 227 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23937,18 +24242,25 @@
 	    case 'SAVE_NAME_INPUT':
 	      return _extends({}, state, {
 	        namesBase: action.payload,
-	        isSmthRepeats: action.isSmthRepeats
+	        isSmthRepeats: action.isSmthRepeats,
+	        errorNameWarning: action.errorNameWarning
 	      });
 	    case 'SAVE_EMAIL_INPUT':
 	      return _extends({}, state, {
-	        emailsBase: state.emailsBase.concat([{
-	          number: action.payload.number,
-	          emailValue: action.payload.emailValue
-	        }])
+	        emailsBase: action.payload,
+	        isSmthRepeats: action.isSmthRepeats,
+	        errorEmailWarning: action.errorEmailWarning
 	      });
 	    case 'CALCULATE_RANDOMIZE':
 	      return _extends({}, state, {
 	        randomizedArr: action.payload
+	      });
+	    case 'POST_RESULTS_ON_EMAILS':
+	      return _extends({}, state, {
+	        responseArr: state.responseArr.concat([{
+	          response: action.payload,
+	          sender: action.sender
+	        }])
 	      });
 	    default:
 	      return state;
@@ -23961,7 +24273,10 @@
 	  namesBaseGarbage: null,
 	  emailsBase: [],
 	  randomizedArr: null,
-	  isSmthRepeats: 0
+	  isSmthRepeats: 0,
+	  errorWarning: '',
+	  responseArr: []
+
 	};
 
 /***/ }
